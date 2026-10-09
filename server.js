@@ -1,30 +1,57 @@
 /* =========================================================
    DHANA FOODS
-   PostgreSQL Order Server
+   MongoDB Order Server (works locally AND on Vercel)
 ========================================================= */
 
 const express = require("express");
+const path = require("path");
 const { MongoClient, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 const HOST = "0.0.0.0";
 
 
 /* =========================================================
-   DATABASE
+   DATABASE (lazy connection - required for Vercel)
 ========================================================= */
-if (!process.env.MONGODB_URI) {
-  console.error("❌ MONGODB_URI is missing.");
-  process.exit(1);
+
+// Removes accidental quotes / spaces / "MONGODB_URI=" prefix
+function getMongoUri() {
+  let uri = String(process.env.MONGODB_URI || "").trim();
+  uri = uri.replace(/^MONGODB_URI\s*=\s*/i, "");
+  uri = uri.replace(/^["']+|["']+$/g, "").trim();
+  return uri;
 }
 
-const client = new MongoClient(process.env.MONGODB_URI);
+let clientPromise = null;
 
-let db;
-let ordersCollection;
+async function getDb() {
+  const uri = getMongoUri();
+
+  if (!uri) {
+    throw new Error("MONGODB_URI is missing.");
+  }
+
+  if (!clientPromise) {
+    clientPromise = new MongoClient(uri)
+      .connect()
+      .catch((err) => {
+        clientPromise = null; // allow retry on next request
+        throw err;
+      });
+  }
+
+  const client = await clientPromise;
+  return client.db("DhanaFoods");
+}
+
+async function getOrders() {
+  const db = await getDb();
+  return db.collection("orders");
+}
 
 
 /* =========================================================
@@ -34,7 +61,9 @@ let ordersCollection;
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(express.static(__dirname));
+// Only the "public" folder is served (never expose .env or server.js).
+// On Vercel, the public folder is also served automatically by the CDN.
+app.use(express.static(path.join(__dirname, "public")));
 
 
 /* =========================================================
@@ -42,70 +71,19 @@ app.use(express.static(__dirname));
 ========================================================= */
 
 const PRODUCTS = {
-  "Idli Batter": {
-    "500g": 25,
-    "1kg": 45
-  },
-
-  "Dosa Batter": {
-    "500g": 25,
-    "1kg": 45
-  },
-
-  "Adai Batter": {
-    "500g": 40,
-    "1kg": 80
-  },
-
-  "Mappilai Samba Batter": {
-    "500g": 40,
-    "1kg": 80
-  },
-
-  "Appam Batter": {
-    "500g": 30,
-    "1kg": 60
-  },
-
-  "Millet Batter": {
-    "500g": 40,
-    "1kg": 80
-  },
-
-  "Poonghar Batter": {
-    "500g": 40,
-    "1kg": 80
-  },
-
-  "Karuppu Kavuni Batter": {
-    "500g": 40,
-    "1kg": 80
-  },
-
-  "Keerai Batter": {
-    "500g": 40,
-    "1kg": 80
-  },
-
-  "Kambu Yasnam Batter": {
-    "500g": 40,
-    "1kg": 80
-  },
-
-  "Ragi Batter": {
-    "500g": 40,
-    "1kg": 80
-  },
-
-  "Karunguruvai Batter": {
-    "500g": 40,
-    "1kg": 80
-  },
-
-  "Pachai Payiru Batter": {
-    "500g": 40,
-    "1kg": 80
-  }
+  "Idli Batter": { "500g": 25, "1kg": 45 },
+  "Dosa Batter": { "500g": 25, "1kg": 45 },
+  "Adai Batter": { "500g": 40, "1kg": 80 },
+  "Mappilai Samba Batter": { "500g": 40, "1kg": 80 },
+  "Appam Batter": { "500g": 30, "1kg": 60 },
+  "Millet Batter": { "500g": 40, "1kg": 80 },
+  "Poonghar Batter": { "500g": 40, "1kg": 80 },
+  "Karuppu Kavuni Batter": { "500g": 40, "1kg": 80 },
+  "Keerai Batter": { "500g": 40, "1kg": 80 },
+  "Kambu Yasnam Batter": { "500g": 40, "1kg": 80 },
+  "Ragi Batter": { "500g": 40, "1kg": 80 },
+  "Karunguruvai Batter": { "500g": 40, "1kg": 80 },
+  "Pachai Payiru Batter": { "500g": 40, "1kg": 80 }
 };
 
 
@@ -114,7 +92,6 @@ const PRODUCTS = {
 ========================================================= */
 
 const PRODUCT_ALIASES = {
-
   "idli": "Idli Batter",
   "idli batter": "Idli Batter",
 
@@ -126,7 +103,6 @@ const PRODUCT_ALIASES = {
 
   "mappilai samba": "Mappilai Samba Batter",
   "mappilai samba batter": "Mappilai Samba Batter",
-
   "mapillai samba": "Mappilai Samba Batter",
   "mapillai samba batter": "Mappilai Samba Batter",
 
@@ -138,15 +114,11 @@ const PRODUCT_ALIASES = {
 
   "poonghar": "Poonghar Batter",
   "poonghar batter": "Poonghar Batter",
-
   "poongar": "Poonghar Batter",
-  "poongar batter": "Poonghar Batter",
-
   "poongar batter": "Poonghar Batter",
 
   "karuppu kavuni": "Karuppu Kavuni Batter",
   "karuppu kavuni batter": "Karuppu Kavuni Batter",
-
   "karupu kavuni": "Karuppu Kavuni Batter",
   "karupu kavuni batter": "Karuppu Kavuni Batter",
 
@@ -161,19 +133,15 @@ const PRODUCT_ALIASES = {
 
   "karunguruvai": "Karunguruvai Batter",
   "karunguruvai batter": "Karunguruvai Batter",
-
   "karinagaruvai": "Karunguruvai Batter",
   "karinagaruvai batter": "Karunguruvai Batter",
-
   "karunaguvrai": "Karunguruvai Batter",
   "karunaguvrai batter": "Karunguruvai Batter",
-
   "karumburuvai": "Karunguruvai Batter",
   "karumburuvai batter": "Karunguruvai Batter",
 
   "pachai payiru": "Pachai Payiru Batter",
   "pachai payiru batter": "Pachai Payiru Batter",
-
   "pachai payir": "Pachai Payiru Batter",
   "pachai payir batter": "Pachai Payiru Batter"
 };
@@ -202,103 +170,50 @@ function normalizeProductKey(value) {
     .replace(/[\s_-]+/g, " ");
 }
 
-
 function normalizeProductName(value) {
-
-  const original =
-    String(value || "").trim();
-
-  if (!original) {
-    return "";
-  }
-
-  const key =
-    normalizeProductKey(original);
-
-  return PRODUCT_ALIASES[key] || original;
+  const original = String(value || "").trim();
+  if (!original) return "";
+  return PRODUCT_ALIASES[normalizeProductKey(original)] || original;
 }
-
 
 function getOfficialPrice(product, size) {
-
-  const canonicalProduct =
-    normalizeProductName(product);
-
-  if (
-    !PRODUCTS[canonicalProduct] ||
-    !PRODUCTS[canonicalProduct][size]
-  ) {
-    return null;
-  }
-
-  return PRODUCTS[canonicalProduct][size];
+  const canonical = normalizeProductName(product);
+  if (!PRODUCTS[canonical] || !PRODUCTS[canonical][size]) return null;
+  return PRODUCTS[canonical][size];
 }
-
 
 function calculateTotal(items) {
-
-  return items.reduce(
-    (total, item) =>
-      total +
-      item.price * item.quantity,
-    0
-  );
-
+  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
 
-
-/* =========================================================
-   DATABASE INITIALIZATION
-========================================================= */
-
-async function initializeDatabase() {
-  await client.connect();
-
-  db = client.db("DhanaFoods");
-  ordersCollection = db.collection("orders");
-
-  console.log("🗄️ MongoDB database ready.");
+function formatOrder(order) {
+  return {
+    id: order.id || order._id.toString(),
+    customerName: order.customerName,
+    phone: order.phone,
+    address: order.address,
+    items: order.items,
+    total: Number(order.total || 0),
+    deliveryDate: order.deliveryDate,
+    paymentMethod: order.paymentMethod || "COD",
+    status: order.status,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt
+  };
 }
 
-
-
-/* =========================================================
-   HOME
-========================================================= */
-
-app.get("/", (req, res) => {
-
-  res.sendFile(
-    require("path").join(
-      __dirname,
-      "index.html"
-    )
-  );
-
-});
-
-
-/* =========================================================
-   ADMIN
-========================================================= */
-
-app.get("/admin.html", (req, res) => {
-
-  res.sendFile(
-    require("path").join(
-      __dirname,
-      "admin.html"
-    )
-  );
-
-});
+function badRequest(res, message) {
+  return res.status(400).json({ error: message });
+}
 
 
 /* =========================================================
    HEALTH CHECK
 ========================================================= */
+
 app.get("/health", async (req, res) => {
   try {
+    const db = await getDb();
     await db.command({ ping: 1 });
 
     res.json({
@@ -322,9 +237,7 @@ app.get("/health", async (req, res) => {
 ========================================================= */
 
 app.get("/api/products", (req, res) => {
-
   res.json(PRODUCTS);
-
 });
 
 
@@ -333,8 +246,8 @@ app.get("/api/products", (req, res) => {
 ========================================================= */
 
 app.post("/api/orders", async (req, res) => {
-
   try {
+    const ordersCollection = await getOrders();
 
     const {
       customerName,
@@ -345,301 +258,134 @@ app.post("/api/orders", async (req, res) => {
       paymentMethod
     } = req.body;
 
+    /* ---- Customer validation ---- */
 
-    /* -------------------------------
-       CUSTOMER VALIDATION
-    -------------------------------- */
-
-    if (
-      !customerName ||
-      !String(customerName).trim()
-    ) {
-
-      return res.status(400).json({
-        error: "Customer name is required."
-      });
-
+    if (!customerName || !String(customerName).trim()) {
+      return badRequest(res, "Customer name is required.");
     }
 
-
-    if (
-      !phone ||
-      !String(phone).trim()
-    ) {
-
-      return res.status(400).json({
-        error: "Phone number is required."
-      });
-
+    if (!phone || !String(phone).trim()) {
+      return badRequest(res, "Phone number is required.");
     }
 
+    const cleanPhone = String(phone).replace(/\D/g, "");
 
-    const cleanPhone =
-      String(phone)
-        .replace(/\D/g, "");
-
-
-    if (
-      !/^[6-9]\d{9}$/.test(
-        cleanPhone
-      )
-    ) {
-
-      return res.status(400).json({
-        error: "Please enter a valid 10-digit mobile number."
-      });
-
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      return badRequest(res, "Please enter a valid 10-digit mobile number.");
     }
 
-
-    if (
-      !address ||
-      !String(address).trim()
-    ) {
-
-      return res.status(400).json({
-        error: "Delivery address is required."
-      });
-
+    if (!address || !String(address).trim()) {
+      return badRequest(res, "Delivery address is required.");
     }
 
-
-    if (
-      !deliveryDate ||
-      !String(deliveryDate).trim()
-    ) {
-
-      return res.status(400).json({
-        error: "Delivery date is required."
-      });
-
+    if (!deliveryDate || !String(deliveryDate).trim()) {
+      return badRequest(res, "Delivery date is required.");
     }
 
+    /* ---- Items validation ---- */
 
-    /* -------------------------------
-       ITEMS VALIDATION
-    -------------------------------- */
-
-    if (
-      !Array.isArray(items) ||
-      items.length === 0
-    ) {
-
-      return res.status(400).json({
-        error: "Please select at least one product."
-      });
-
+    if (!Array.isArray(items) || items.length === 0) {
+      return badRequest(res, "Please select at least one product.");
     }
-
 
     const normalizedItems = [];
 
-
     for (const item of items) {
-
-      const product =
-        normalizeProductName(
-          item.product
-        );
-
-      const size =
-        String(item.size || "")
-          .trim();
-
-      const quantity =
-        Number(item.quantity);
-
+      const product = normalizeProductName(item.product);
+      const size = String(item.size || "").trim();
+      const quantity = Number(item.quantity);
 
       if (!PRODUCTS[product]) {
-
-        return res.status(400).json({
-          error:
-            `Invalid product: ${item.product}`
-        });
-
+        return badRequest(res, `Invalid product: ${item.product}`);
       }
 
-
-      if (
-        size !== "500g" &&
-        size !== "1kg"
-      ) {
-
-        return res.status(400).json({
-          error:
-            `Invalid size for ${product}.`
-        });
-
+      if (size !== "500g" && size !== "1kg") {
+        return badRequest(res, `Invalid size for ${product}.`);
       }
 
-
-      if (
-        !Number.isInteger(quantity) ||
-        quantity <= 0 ||
-        quantity > 100
-      ) {
-
-        return res.status(400).json({
-          error:
-            `Invalid quantity for ${product}.`
-        });
-
+      if (!Number.isInteger(quantity) || quantity <= 0 || quantity > 100) {
+        return badRequest(res, `Invalid quantity for ${product}.`);
       }
 
-
-      const officialPrice =
-        getOfficialPrice(
-          product,
-          size
-        );
-
+      const officialPrice = getOfficialPrice(product, size);
 
       if (officialPrice === null) {
-
-        return res.status(400).json({
-          error:
-            `Invalid price for ${product}.`
-        });
-
+        return badRequest(res, `Invalid price for ${product}.`);
       }
 
-
       normalizedItems.push({
-
         product,
-
         size,
-
         quantity,
-
         price: officialPrice
-
       });
-
     }
 
+    /* ---- Total & payment ---- */
 
-    /* -------------------------------
-       TOTAL
-    -------------------------------- */
+    const total = calculateTotal(normalizedItems);
+    const finalPaymentMethod = paymentMethod === "UPI" ? "UPI" : "COD";
 
-    const total =
-      calculateTotal(
-        normalizedItems
-      );
-
-
-    /* -------------------------------
-       PAYMENT
-    -------------------------------- */
-
-    const finalPaymentMethod =
-      paymentMethod === "UPI"
-        ? "UPI"
-        : "COD";
-
-
-    /* -------------------------------
-       SAVE ORDER
-    -------------------------------- */
-    const orderId = new ObjectId().toString();
+    /* ---- Save order ---- */
 
     const order = {
-      id: orderId,
+      id: new ObjectId().toString(),
       customerName: String(customerName).trim(),
       phone: cleanPhone,
       address: String(address).trim(),
       items: normalizedItems,
       total,
-      deliveryDate: deliveryDate,
+      deliveryDate: String(deliveryDate).trim(),
       paymentMethod: finalPaymentMethod,
       status: "Pending",
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
-    const result = await ordersCollection.insertOne(order);
+    await ordersCollection.insertOne(order);
 
-    console.log(
-      `🛒 New order #${result.insertedId.toString()} - ₹${total}`
-    );
+    console.log(`🛒 New order #${order.id} - ₹${total}`);
 
     return res.status(201).json({
       success: true,
       message: "Order placed successfully.",
       id: order.id,
       orderId: order.id,
-
-      order: {
-        id: order.id,
-        customerName: order.customerName,
-        phone: order.phone,
-        address: order.address,
-        items: order.items,
-        total: Number(order.total || 0),
-        deliveryDate: order.deliveryDate,
-        paymentMethod: order.paymentMethod,
-        status: order.status,
-        createdAt: order.createdAt,
-        updatedAt: order.updatedAt
-      }
+      order: formatOrder(order)
     });
 
   } catch (error) {
-
     console.error("❌ Create order error:", error);
 
     return res.status(500).json({
       error: "Unable to create order."
     });
-
   }
-
 });
 
 
 /* =========================================================
    GET ALL ORDERS
 ========================================================= */
+
 app.get("/api/orders", async (req, res) => {
-
   try {
+    const ordersCollection = await getOrders();
 
-const orders = await ordersCollection
-  .find({})
-  .sort({ createdAt: -1 })
-  .toArray();
+    const orders = await ordersCollection
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
 
-const formattedOrders = orders.map((order) => ({
-  id: order.id || order._id.toString(),
-  customerName: order.customerName,
-  phone: order.phone,
-  address: order.address,
-  items: order.items,
-  total: Number(order.total || 0),
-  deliveryDate: order.deliveryDate,
-  paymentMethod: order.paymentMethod || "COD",
-  status: order.status,
-  createdAt: order.createdAt,
-  updatedAt: order.updatedAt
-}));
+    res.json(orders.map(formatOrder));
 
-res.json(formattedOrders);
-  } 
-  catch (error) {
-
-    console.error(
-      "❌ Get orders error:",
-      error
-    );
+  } catch (error) {
+    console.error("❌ Get orders error:", error);
 
     res.status(500).json({
-      error:
-        "Unable to load orders."
+      error: "Unable to load orders."
     });
-
   }
-
 });
 
 
@@ -647,378 +393,141 @@ res.json(formattedOrders);
    GET SINGLE ORDER
 ========================================================= */
 
-app.get(
-  "/api/orders/:id",
-  async (req, res) => {
+app.get("/api/orders/:id", async (req, res) => {
+  try {
+    const ordersCollection = await getOrders();
 
-    try {
+    const id = String(req.params.id).trim();
 
-      const id = String(req.params.id).trim();
-
-      if (!id) {
-
-        return res.status(400).json({
-          error: "Invalid order ID."
-        });
-
-      }
-
-      const order = await ordersCollection.findOne({
-        id: id
-      });
-
-      if (!order) {
-
-        return res.status(404).json({
-          error: "Order not found."
-        });
-
-      }
-
-      res.json({
-
-        id:
-          order.id || order._id.toString(),
-
-        customerName:
-          order.customerName,
-
-        phone:
-          order.phone,
-
-        address:
-          order.address,
-
-        items:
-          order.items,
-
-        total:
-          Number(order.total || 0),
-
-        deliveryDate:
-          order.deliveryDate,
-
-        paymentMethod:
-          order.paymentMethod || "COD",
-
-        status:
-          order.status,
-
-        createdAt:
-          order.createdAt,
-
-        updatedAt:
-          order.updatedAt
-
-      });
-
-    } catch (error) {
-
-      console.error(
-        "❌ Get order error:",
-        error
-      );
-
-      res.status(500).json({
-        error:
-          "Unable to load order."
-      });
-
+    if (!id) {
+      return badRequest(res, "Invalid order ID.");
     }
 
+    const order = await ordersCollection.findOne({ id });
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found." });
+    }
+
+    res.json(formatOrder(order));
+
+  } catch (error) {
+    console.error("❌ Get order error:", error);
+
+    res.status(500).json({
+      error: "Unable to load order."
+    });
   }
-);
+});
+
 
 /* =========================================================
    UPDATE ORDER STATUS
 ========================================================= */
-app.put(
-  "/api/orders/:id",
-  async (req, res) => {
 
-    try {
+app.put("/api/orders/:id", async (req, res) => {
+  try {
+    const ordersCollection = await getOrders();
 
-      const id =
-        String(req.params.id).trim();
+    const id = String(req.params.id).trim();
 
-
-      if (!id) {
-
-        return res.status(400).json({
-          error: "Invalid order ID."
-        });
-
-      }
-
-
-      const status =
-        String(
-          req.body.status || ""
-        ).trim();
-
-
-      if (
-        !VALID_STATUSES.includes(
-          status
-        )
-      ) {
-
-        return res.status(400).json({
-          error:
-            "Invalid order status."
-        });
-
-      }
-
-
-      const result =
-        await ordersCollection.updateOne(
-          { id: id },
-          {
-            $set: {
-              status: status,
-              updatedAt: new Date()
-            }
-          }
-        );
-
-
-      if (result.matchedCount === 0) {
-
-        return res.status(404).json({
-          error: "Order not found."
-        });
-
-      }
-
-
-      console.log(
-        `📦 Order #${id} → ${status}`
-      );
-
-
-      res.json({
-
-        success: true,
-
-        message:
-          "Order status updated.",
-
-        order: {
-
-          id: id,
-
-          status:
-            status
-
-        }
-
-      });
-
-    } catch (error) {
-
-      console.error(
-        "❌ Update status error:",
-        error
-      );
-
-      res.status(500).json({
-        error:
-          "Unable to update order status."
-      });
-
+    if (!id) {
+      return badRequest(res, "Invalid order ID.");
     }
 
+    const status = String(req.body.status || "").trim();
+
+    if (!VALID_STATUSES.includes(status)) {
+      return badRequest(res, "Invalid order status.");
+    }
+
+    const result = await ordersCollection.updateOne(
+      { id },
+      { $set: { status, updatedAt: new Date() } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "Order not found." });
+    }
+
+    console.log(`📦 Order #${id} → ${status}`);
+
+    res.json({
+      success: true,
+      message: "Order status updated.",
+      order: { id, status }
+    });
+
+  } catch (error) {
+    console.error("❌ Update status error:", error);
+
+    res.status(500).json({
+      error: "Unable to update order status."
+    });
   }
-);
+});
 
 
 /* =========================================================
    DELETE ORDER
 ========================================================= */
-app.delete(
-  "/api/orders/:id",
-  async (req, res) => {
 
-    try {
+app.delete("/api/orders/:id", async (req, res) => {
+  try {
+    const ordersCollection = await getOrders();
 
-      const id =
-        String(req.params.id).trim();
+    const id = String(req.params.id).trim();
 
-
-      if (!id) {
-
-        return res.status(400).json({
-          error: "Invalid order ID."
-        });
-
-      }
-
-
-      const result =
-        await ordersCollection.deleteOne({
-          id: id
-        });
-
-
-      if (result.deletedCount === 0) {
-
-        return res.status(404).json({
-          error: "Order not found."
-        });
-
-      }
-
-
-      console.log(
-        `🗑️ Order #${id} deleted`
-      );
-
-
-      res.json({
-
-        success: true,
-
-        message:
-          "Order deleted.",
-
-        id: id
-
-      });
-
-    } catch (error) {
-
-      console.error(
-        "❌ Delete order error:",
-        error
-      );
-
-      res.status(500).json({
-        error:
-          "Unable to delete order."
-      });
-
+    if (!id) {
+      return badRequest(res, "Invalid order ID.");
     }
 
+    const result = await ordersCollection.deleteOne({ id });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: "Order not found." });
+    }
+
+    console.log(`🗑️ Order #${id} deleted`);
+
+    res.json({
+      success: true,
+      message: "Order deleted.",
+      id
+    });
+
+  } catch (error) {
+    console.error("❌ Delete order error:", error);
+
+    res.status(500).json({
+      error: "Unable to delete order."
+    });
   }
-);
+});
 
 
 /* =========================================================
    404 API
 ========================================================= */
 
-app.use(
-  "/api",
-  (req, res) => {
-
-    res.status(404).json({
-      error:
-        "API endpoint not found."
-    });
-
-  }
-);
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    error: "API endpoint not found."
+  });
+});
 
 
 /* =========================================================
-   START SERVER
+   START SERVER (local only - Vercel uses the exported app)
 ========================================================= */
 
-async function startServer() {
-
-  try {
-
-    await initializeDatabase();
-
-
-    app.listen(
-      PORT,
-      HOST,
-      () => {
-
-        console.log("");
-        console.log(
-          "========================================"
-        );
-
-        console.log(
-          "🥣 DHANA FOODS SERVER STARTED"
-        );
-
-        console.log(
-          `🌐 Port: ${PORT}`
-        );
-
-        console.log(
-          `🛒 Ordering: ACTIVE`
-        );
-
-        console.log(
-          `🗄️ MongoDB: ACTIVE`
-        );
-
-        console.log(
-          `👨‍💼 Admin API: ACTIVE`
-        );
-
-        console.log(
-          "========================================"
-        );
-
-        console.log("");
-
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      "❌ Server startup failed:",
-      error
-    );
-
-    process.exit(1);
-
-  }
-
+if (!process.env.VERCEL) {
+  app.listen(PORT, HOST, () => {
+    console.log("========================================");
+    console.log("🥣 DHANA FOODS SERVER STARTED");
+    console.log(`🌐 http://localhost:${PORT}`);
+    console.log("========================================");
+  });
 }
 
-
-startServer();
-
-
-/* =========================================================
-   GRACEFUL SHUTDOWN
-========================================================= */
-process.on(
-  "SIGTERM",
-  async () => {
-
-    console.log(
-      "🛑 SIGTERM received."
-    );
-
-    await client.close();
-
-    process.exit(0);
-
-  }
-);
-
-
-process.on(
-  "SIGINT",
-  async () => {
-
-    console.log(
-      "🛑 Server stopping..."
-    );
-
-    await client.close();
-
-    process.exit(0);
-
-  }
-);
-  
+module.exports = app;
