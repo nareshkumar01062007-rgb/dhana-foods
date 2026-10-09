@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhana Foods Admin Login</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fffaf0;
+            font-family: Arial, sans-serif;
+        }
+
+        .login-box {
+            width: 90%;
+            max-width: 420px;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .login-box h1 {
+            margin-bottom: 10px;
+        }
+
+        .login-box p {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 14px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .login-box button:hover {
+            opacity: 0.85;
+        }
+
+        #errorMessage {
+            color: #d33;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-box">
+
+        <h1>🌾 Dhana Foods</h1>
+
+        <p>Admin Login</p>
+
+        <input
+            type="text"
+            id="username"
+            placeholder="Username"
+        >
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Password"
+        >
+
+        <button onclick="login()">
+            Login
+        </button>
+
+        <p id="errorMessage">
+            Invalid username or password.
+        </p>
+
+    </div>
+
+    <script>
+        function login() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const errorMessage = document.getElementById("errorMessage");
+
+            if (username === "admin" && password === "dhana123") {
+                sessionStorage.setItem("adminLoggedIn", "true");
+                window.location.href = "admin.html";
+            } else {
+                errorMessage.style.display = "block";
+            }
+        }
+    </script>
+
+</body>
+
+</html>

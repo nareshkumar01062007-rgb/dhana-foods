@@ -1,0 +1,2182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>DHANA FOODS | Admin Dashboard</title>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+      background:
+        linear-gradient(
+          135deg,
+          #f4faf3,
+          #fffaf0
+        );
+
+      color: #26352b;
+      min-height: 100vh;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    /* ================= HEADER ================= */
+
+    .admin-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+
+      background:
+        linear-gradient(
+          135deg,
+          #174b2a,
+          #267343
+        );
+
+      color: white;
+
+      box-shadow:
+        0 8px 30px rgba(20, 60, 30, 0.18);
+    }
+
+    .header-inner {
+      width: min(1250px, 94%);
+
+      min-height: 82px;
+
+      margin: auto;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+
+      align-items: center;
+
+      gap: 13px;
+    }
+
+    .brand-logo {
+      width: 52px;
+      height: 52px;
+
+      display: grid;
+
+      place-items: center;
+
+      border-radius: 16px;
+
+      background:
+        rgba(255, 255, 255, 0.15);
+
+      font-size: 28px;
+    }
+
+    .brand h1 {
+      font-size: 1.25rem;
+
+      letter-spacing: 1px;
+    }
+
+    .brand p {
+      opacity: 0.75;
+
+      font-size: 0.75rem;
+    }
+
+    .header-actions {
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
+    }
+
+    .header-btn {
+      border: 0;
+
+      padding: 10px 15px;
+
+      border-radius: 12px;
+
+      background:
+        rgba(255, 255, 255, 0.13);
+
+      color: white;
+
+      cursor: pointer;
+
+      font-weight: 700;
+
+      transition:
+        0.25s ease;
+    }
+
+    .header-btn:hover {
+      background:
+        rgba(255, 255, 255, 0.23);
+
+      transform:
+        translateY(-2px);
+    }
+
+    /* ================= MAIN ================= */
+
+    .container {
+      width: min(1250px, 94%);
+
+      margin: 0 auto;
+
+      padding: 35px 0 60px;
+    }
+
+    .page-title {
+      margin-bottom: 25px;
+    }
+
+    .page-title span {
+      color: #267343;
+
+      font-size: 0.78rem;
+
+      font-weight: 900;
+
+      letter-spacing: 2px;
+    }
+
+    .page-title h2 {
+      margin-top: 5px;
+
+      color: #174b2a;
+
+      font-size:
+        clamp(
+          1.8rem,
+          4vw,
+          2.7rem
+        );
+    }
+
+    .page-title p {
+      color: #6b776e;
+
+      margin-top: 5px;
+    }
+
+    /* ================= SUMMARY ================= */
+
+    .summary-grid {
+      display: grid;
+
+      grid-template-columns:
+        repeat(4, 1fr);
+
+      gap: 16px;
+
+      margin-bottom: 28px;
+    }
+
+    .summary-card {
+      padding: 22px;
+
+      background: white;
+
+      border-radius: 20px;
+
+      border:
+        1px solid
+        rgba(39, 115, 67, 0.08);
+
+      box-shadow:
+        0 12px 35px
+        rgba(30, 60, 35, 0.08);
+
+      transition:
+        0.25s ease;
+    }
+
+    .summary-card:hover {
+      transform:
+        translateY(-5px);
+
+      box-shadow:
+        0 18px 45px
+        rgba(30, 60, 35, 0.13);
+    }
+
+    .summary-icon {
+      font-size: 28px;
+
+      margin-bottom: 10px;
+    }
+
+    .summary-card span {
+      display: block;
+
+      color: #748078;
+
+      font-size: 0.78rem;
+
+      font-weight: 700;
+    }
+
+    .summary-card strong {
+      display: block;
+
+      margin-top: 3px;
+
+      color: #174b2a;
+
+      font-size: 1.8rem;
+    }
+
+    /* ================= TOOLBAR ================= */
+
+    .toolbar {
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 15px;
+
+      padding: 17px 20px;
+
+      background: white;
+
+      border-radius: 18px;
+
+      box-shadow:
+        0 10px 30px
+        rgba(30, 60, 35, 0.07);
+
+      margin-bottom: 22px;
+    }
+
+    .filter-group {
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
+    }
+
+    .filter-group label {
+      color: #647068;
+
+      font-size: 0.85rem;
+
+      font-weight: 700;
+    }
+
+    #statusFilter {
+      padding: 10px 13px;
+
+      border:
+        1px solid #dce6dd;
+
+      border-radius: 11px;
+
+      background: #fbfdfb;
+
+      color: #294133;
+
+      outline: none;
+    }
+
+    .refresh-btn {
+      border: 0;
+
+      padding: 10px 16px;
+
+      border-radius: 11px;
+
+      background: #eaf6e9;
+
+      color: #267343;
+
+      font-weight: 800;
+
+      cursor: pointer;
+
+      transition: 0.25s ease;
+    }
+
+    .refresh-btn:hover {
+      background: #dcefdc;
+
+      transform:
+        translateY(-2px);
+    }
+
+    /* ================= ORDERS ================= */
+
+    #ordersContainer {
+      display: grid;
+
+      gap: 18px;
+    }
+
+    .order-card {
+      background: white;
+
+      border-radius: 23px;
+
+      overflow: hidden;
+
+      border:
+        1px solid
+        rgba(39, 115, 67, 0.08);
+
+      box-shadow:
+        0 13px 38px
+        rgba(30, 60, 35, 0.08);
+
+      animation:
+        orderIn 0.45s ease both;
+    }
+
+    @keyframes orderIn {
+
+      from {
+        opacity: 0;
+
+        transform:
+          translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+
+        transform:
+          translateY(0);
+      }
+
+    }
+
+    .order-top {
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 15px;
+
+      padding: 19px 22px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #f3faf0,
+          #fffdf7
+        );
+
+      border-bottom:
+        1px solid #edf1ed;
+    }
+
+    .order-number {
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
+    }
+
+    .order-number-icon {
+      width: 43px;
+      height: 43px;
+
+      display: grid;
+
+      place-items: center;
+
+      border-radius: 13px;
+
+      background: #e6f3e4;
+
+      font-size: 21px;
+    }
+
+    .order-number strong {
+      color: #174b2a;
+
+      font-size: 1.05rem;
+    }
+
+    .order-time {
+      display: block;
+
+      color: #7a857d;
+
+      font-size: 0.72rem;
+
+      margin-top: 2px;
+    }
+
+    /* ================= STATUS ================= */
+
+    .status-select {
+      min-width: 170px;
+
+      padding: 10px 13px;
+
+      border-radius: 12px;
+
+      border:
+        1px solid #dce6dd;
+
+      outline: none;
+
+      font-weight: 800;
+
+      cursor: pointer;
+
+      background: white;
+    }
+
+    .status-select.pending {
+      color: #997100;
+
+      background: #fff8d9;
+
+      border-color: #f1d96d;
+    }
+
+    .status-select.preparing {
+      color: #23677c;
+
+      background: #e5f4fa;
+
+      border-color: #9ed4e6;
+    }
+
+    .status-select.out-for-delivery {
+      color: #a85b11;
+
+      background: #fff0df;
+
+      border-color: #f0bd80;
+    }
+
+    .status-select.delivered {
+      color: #27713d;
+
+      background: #e7f7e9;
+
+      border-color: #9bd2a3;
+    }
+
+    /* ================= ORDER BODY ================= */
+
+    .order-body {
+      padding: 22px;
+    }
+
+    .customer-grid {
+      display: grid;
+
+      grid-template-columns:
+        repeat(3, 1fr);
+
+      gap: 13px;
+
+      margin-bottom: 22px;
+    }
+
+    .customer-box {
+      padding: 15px;
+
+      border-radius: 14px;
+
+      background: #f8faf7;
+    }
+
+    .customer-box label {
+      display: block;
+
+      color: #7a847d;
+
+      font-size: 0.7rem;
+
+      font-weight: 800;
+
+      margin-bottom: 4px;
+    }
+
+    .customer-box strong {
+      color: #293b30;
+
+      font-size: 0.88rem;
+
+      word-break: break-word;
+    }
+
+    /* ================= ITEMS ================= */
+
+    .items-title {
+      display: flex;
+
+      align-items: center;
+
+      gap: 8px;
+
+      color: #174b2a;
+
+      font-size: 0.95rem;
+
+      font-weight: 900;
+
+      margin-bottom: 10px;
+    }
+
+    .items-table {
+      width: 100%;
+
+      border-collapse: collapse;
+
+      overflow: hidden;
+    }
+
+    .items-table th {
+      text-align: left;
+
+      padding: 11px;
+
+      background: #f1f7ef;
+
+      color: #617066;
+
+      font-size: 0.73rem;
+
+      text-transform: uppercase;
+    }
+
+    .items-table td {
+      padding: 12px 11px;
+
+      border-bottom:
+        1px solid #edf0ed;
+
+      color: #435047;
+
+      font-size: 0.83rem;
+    }
+
+    .items-table td strong {
+      color: #294133;
+    }
+
+    .order-bottom {
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 15px;
+
+      margin-top: 20px;
+
+      padding-top: 17px;
+
+      border-top:
+        1px solid #edf0ed;
+    }
+
+    .payment-badge {
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 7px;
+
+      padding: 8px 12px;
+
+      background: #f2f5f2;
+
+      color: #506056;
+
+      border-radius: 999px;
+
+      font-size: 0.76rem;
+
+      font-weight: 800;
+    }
+
+    .total-box {
+      text-align: right;
+    }
+
+    .total-box span {
+      display: block;
+
+      color: #77827a;
+
+      font-size: 0.75rem;
+    }
+
+    .total-box strong {
+      display: block;
+
+      color: #e17818;
+
+      font-size: 1.55rem;
+    }
+
+    /* ================= DELETE ================= */
+
+    .order-actions {
+      display: flex;
+
+      justify-content: flex-end;
+
+      gap: 10px;
+
+      margin-top: 18px;
+    }
+
+    .delete-btn {
+      border: 0;
+
+      padding: 9px 14px;
+
+      border-radius: 10px;
+
+      background: #fff0ef;
+
+      color: #c44238;
+
+      font-size: 0.78rem;
+
+      font-weight: 800;
+
+      cursor: pointer;
+
+      transition: 0.25s ease;
+    }
+
+    .delete-btn:hover {
+      background: #ffe1df;
+
+      transform:
+        translateY(-2px);
+    }
+
+    /* ================= EMPTY ================= */
+
+    .empty-state {
+      padding: 70px 20px;
+
+      background: white;
+
+      border-radius: 23px;
+
+      text-align: center;
+
+      box-shadow:
+        0 12px 35px
+        rgba(30, 60, 35, 0.07);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 55px;
+
+      margin-bottom: 12px;
+    }
+
+    .empty-state h3 {
+      color: #174b2a;
+
+      margin-bottom: 5px;
+    }
+
+    .empty-state p {
+      color: #77827a;
+
+      font-size: 0.9rem;
+    }
+
+    /* ================= LOADING ================= */
+
+    .loading {
+      padding: 50px;
+
+      text-align: center;
+
+      color: #267343;
+
+      font-weight: 800;
+    }
+
+    .loading span {
+      display: inline-block;
+
+      font-size: 30px;
+
+      animation:
+        loadingSpin 1.2s linear infinite;
+    }
+
+    @keyframes loadingSpin {
+
+      to {
+        transform:
+          rotate(360deg);
+      }
+
+    }
+
+    /* ================= ERROR ================= */
+
+    .error-box {
+      padding: 18px;
+
+      background: #fff0ef;
+
+      border:
+        1px solid #f0c4c0;
+
+      border-radius: 15px;
+
+      color: #a7352e;
+
+      font-weight: 700;
+    }
+
+    /* ================= MOBILE ================= */
+
+    @media (max-width: 900px) {
+
+      .summary-grid {
+        grid-template-columns:
+          repeat(2, 1fr);
+      }
+
+      .customer-grid {
+        grid-template-columns:
+          repeat(2, 1fr);
+      }
+
+    }
+
+    @media (max-width: 650px) {
+
+      .header-inner {
+        min-height: 70px;
+      }
+
+      .brand h1 {
+        font-size: 1rem;
+      }
+
+      .brand p {
+        font-size: 0.65rem;
+      }
+
+      .header-btn {
+        padding: 8px 10px;
+
+        font-size: 0.72rem;
+      }
+
+      .container {
+        padding-top: 25px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr 1fr;
+
+        gap: 10px;
+      }
+
+      .summary-card {
+        padding: 16px;
+      }
+
+      .summary-card strong {
+        font-size: 1.45rem;
+      }
+
+      .toolbar {
+        flex-direction: column;
+
+        align-items: stretch;
+      }
+
+      .filter-group {
+        justify-content: space-between;
+      }
+
+      #statusFilter {
+        flex: 1;
+      }
+
+      .refresh-btn {
+        width: 100%;
+      }
+
+      .order-top {
+        align-items: flex-start;
+
+        flex-direction: column;
+      }
+
+      .status-select {
+        width: 100%;
+      }
+
+      .customer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .order-body {
+        padding: 16px;
+      }
+
+      .items-table {
+        min-width: 600px;
+      }
+
+      .order-body {
+        overflow-x: auto;
+      }
+
+      .order-bottom {
+        align-items: flex-start;
+
+        flex-direction: column;
+      }
+
+      .total-box {
+        text-align: left;
+      }
+
+      .order-actions {
+        justify-content: stretch;
+      }
+
+      .delete-btn {
+        width: 100%;
+      }
+
+    }
+
+  </style>
+</head>
+
+<body>
+
+
+  <!-- ================= HEADER ================= -->
+
+  <header class="admin-header">
+
+    <div class="header-inner">
+
+      <div class="brand">
+
+        <div class="brand-logo">
+          🥣
+        </div>
+
+        <div>
+
+          <h1>
+            DHANA FOODS
+          </h1>
+
+          <p>
+            Admin Dashboard
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="header-actions">
+
+        <button
+          class="header-btn"
+          onclick="window.location.href='/'"
+        >
+          🏠 Website
+        </button>
+
+      </div>
+
+    </div>
+
+  </header>
+
+
+
+  <!-- ================= MAIN ================= -->
+
+  <main class="container">
+
+
+    <div class="page-title">
+
+      <span>
+        👨‍💼 ORDER MANAGEMENT
+      </span>
+
+      <h2>
+        Dhana Foods Orders
+      </h2>
+
+      <p>
+        Manage customer orders and update delivery status.
+      </p>
+
+    </div>
+
+
+
+    <!-- ================= SUMMARY ================= -->
+
+    <section class="summary-grid">
+
+
+      <div class="summary-card">
+
+        <div class="summary-icon">
+          📦
+        </div>
+
+        <span>
+          Total Orders
+        </span>
+
+        <strong id="totalOrders">
+          0
+        </strong>
+
+      </div>
+
+
+      <div class="summary-card">
+
+        <div class="summary-icon">
+          🟡
+        </div>
+
+        <span>
+          Pending
+        </span>
+
+        <strong id="pendingOrders">
+          0
+        </strong>
+
+      </div>
+
+
+      <div class="summary-card">
+
+        <div class="summary-icon">
+          🔵
+        </div>
+
+        <span>
+          Preparing
+        </span>
+
+        <strong id="preparingOrders">
+          0
+        </strong>
+
+      </div>
+
+
+      <div class="summary-card">
+
+        <div class="summary-icon">
+          💰
+        </div>
+
+        <span>
+          Total Value
+        </span>
+
+        <strong id="totalValue">
+          ₹0
+        </strong>
+
+      </div>
+
+
+    </section>
+
+
+
+    <!-- ================= TOOLBAR ================= -->
+
+    <section class="toolbar">
+
+      <div class="filter-group">
+
+        <label for="statusFilter">
+          Filter:
+        </label>
+
+        <select id="statusFilter">
+
+          <option value="All">
+            All Orders
+          </option>
+
+          <option value="Pending">
+            🟡 Pending
+          </option>
+
+          <option value="Preparing">
+            🔵 Preparing
+          </option>
+
+          <option value="Out for Delivery">
+            🟠 Out for Delivery
+          </option>
+
+          <option value="Delivered">
+            🟢 Delivered
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <button
+        id="refreshBtn"
+        class="refresh-btn"
+      >
+        🔄 Refresh Orders
+      </button>
+
+    </section>
+
+
+
+    <!-- ================= ORDERS ================= -->
+
+    <section id="ordersContainer">
+
+      <div class="loading">
+
+        <span>
+          🥣
+        </span>
+
+        <p>
+          Loading orders...
+        </p>
+
+      </div>
+
+    </section>
+
+
+  </main>
+
+
+
+  <script>
+
+    /* =====================================================
+       STATE
+    ===================================================== */
+
+    let allOrders = [];
+
+
+    /* =====================================================
+       ELEMENTS
+    ===================================================== */
+
+    const ordersContainer =
+      document.getElementById(
+        "ordersContainer"
+      );
+
+    const statusFilter =
+      document.getElementById(
+        "statusFilter"
+      );
+
+    const refreshBtn =
+      document.getElementById(
+        "refreshBtn"
+      );
+
+
+    /* =====================================================
+       ESCAPE HTML
+    ===================================================== */
+
+    function escapeHtml(value) {
+
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    }
+
+
+    /* =====================================================
+       FORMAT DATE
+    ===================================================== */
+
+    function formatDate(value) {
+
+      if (!value) {
+        return "-";
+      }
+
+      const date =
+        new Date(value);
+
+      if (
+        Number.isNaN(
+          date.getTime()
+        )
+      ) {
+        return escapeHtml(value);
+      }
+
+      return date.toLocaleDateString(
+        "en-IN",
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric"
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       FORMAT DATE + TIME
+    ===================================================== */
+
+    function formatDateTime(value) {
+
+      if (!value) {
+        return "";
+      }
+
+      const date =
+        new Date(value);
+
+      if (
+        Number.isNaN(
+          date.getTime()
+        )
+      ) {
+        return "";
+      }
+
+      return date.toLocaleString(
+        "en-IN",
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       NORMALIZE ORDER
+    ===================================================== */
+
+    function normalizeOrder(order) {
+
+      const items =
+        Array.isArray(order.items)
+          ? order.items
+          : [];
+
+
+      return {
+
+        id:
+          order.id,
+
+        customerName:
+          order.customerName ??
+          order.customer_name ??
+          "-",
+
+        phone:
+          order.phone ??
+          "-",
+
+        address:
+          order.address ??
+          "-",
+
+        items,
+
+        total:
+          Number(
+            order.total ?? 0
+          ),
+
+        deliveryDate:
+          order.deliveryDate ??
+          order.delivery_date ??
+          "",
+
+        paymentMethod:
+          order.paymentMethod ??
+          order.payment_method ??
+          "COD",
+
+        status:
+          order.status ??
+          "Pending",
+
+        createdAt:
+          order.createdAt ??
+          order.created_at ??
+          ""
+
+      };
+
+    }
+
+
+    /* =====================================================
+       LOAD ORDERS
+    ===================================================== */
+
+    async function loadOrders() {
+
+      ordersContainer.innerHTML = `
+
+        <div class="loading">
+
+          <span>🥣</span>
+
+          <p>
+            Loading orders...
+          </p>
+
+        </div>
+
+      `;
+
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/orders",
+            {
+              cache: "no-store"
+            }
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            `Server returned ${response.status}`
+          );
+
+        }
+
+
+        const data =
+          await response.json();
+
+
+        let rawOrders = [];
+
+
+        if (Array.isArray(data)) {
+
+          rawOrders = data;
+
+        } else if (
+          Array.isArray(data.orders)
+        ) {
+
+          rawOrders = data.orders;
+
+        } else if (
+          Array.isArray(data.data)
+        ) {
+
+          rawOrders = data.data;
+
+        }
+
+
+        allOrders =
+          rawOrders.map(
+            normalizeOrder
+          );
+
+
+        updateSummary();
+
+        renderOrders();
+
+      } catch (error) {
+
+        console.error(
+          "Admin load error:",
+          error
+        );
+
+
+        ordersContainer.innerHTML = `
+
+          <div class="error-box">
+
+            ❌ Unable to load orders.
+
+            <br><br>
+
+            Please check that the server
+            and PostgreSQL database are running.
+
+          </div>
+
+        `;
+
+      }
+
+    }
+
+
+    /* =====================================================
+       SUMMARY
+    ===================================================== */
+
+    function updateSummary() {
+
+      const total =
+        allOrders.length;
+
+
+      const pending =
+        allOrders.filter(
+          order =>
+            order.status === "Pending"
+        ).length;
+
+
+      const preparing =
+        allOrders.filter(
+          order =>
+            order.status === "Preparing"
+        ).length;
+
+
+      const totalValue =
+        allOrders.reduce(
+          (sum, order) =>
+            sum +
+            Number(order.total || 0),
+          0
+        );
+
+
+      document.getElementById(
+        "totalOrders"
+      ).textContent =
+        total;
+
+
+      document.getElementById(
+        "pendingOrders"
+      ).textContent =
+        pending;
+
+
+      document.getElementById(
+        "preparingOrders"
+      ).textContent =
+        preparing;
+
+
+      document.getElementById(
+        "totalValue"
+      ).textContent =
+        `₹${totalValue}`;
+
+    }
+
+
+    /* =====================================================
+       STATUS CLASS
+    ===================================================== */
+
+    function statusClass(status) {
+
+      if (status === "Pending") {
+        return "pending";
+      }
+
+      if (status === "Preparing") {
+        return "preparing";
+      }
+
+      if (status === "Out for Delivery") {
+        return "out-for-delivery";
+      }
+
+      if (status === "Delivered") {
+        return "delivered";
+      }
+
+      return "pending";
+
+    }
+
+
+    /* =====================================================
+       PAYMENT ICON
+    ===================================================== */
+
+    function paymentIcon(payment) {
+
+      if (
+        String(payment)
+          .toUpperCase() === "UPI"
+      ) {
+        return "📱";
+      }
+
+      return "💵";
+
+    }
+
+
+    /* =====================================================
+       RENDER ORDERS
+    ===================================================== */
+
+    function renderOrders() {
+
+      const selected =
+        statusFilter.value;
+
+
+      const filtered =
+        selected === "All"
+          ? allOrders
+          : allOrders.filter(
+              order =>
+                order.status === selected
+            );
+
+
+      if (filtered.length === 0) {
+
+        ordersContainer.innerHTML = `
+
+          <div class="empty-state">
+
+            <div class="empty-icon">
+              🥣
+            </div>
+
+            <h3>
+              No orders found
+            </h3>
+
+            <p>
+              New customer orders will appear here.
+            </p>
+
+          </div>
+
+        `;
+
+        return;
+
+      }
+
+
+      ordersContainer.innerHTML =
+        filtered
+          .map(
+            order =>
+              createOrderHtml(order)
+          )
+          .join("");
+
+
+      attachOrderEvents();
+
+    }
+
+
+    /* =====================================================
+       CREATE ORDER HTML
+    ===================================================== */
+
+    function createOrderHtml(order) {
+
+      const items =
+        Array.isArray(order.items)
+          ? order.items
+          : [];
+
+
+      const itemsHtml =
+        items.length
+          ? items
+              .map(
+                item => {
+
+                  const product =
+                    item.product ??
+                    item.name ??
+                    "Product";
+
+                  const size =
+                    item.size ??
+                    "";
+
+                  const quantity =
+                    Number(
+                      item.quantity ?? 0
+                    );
+
+                  const price =
+                    Number(
+                      item.price ?? 0
+                    );
+
+                  const lineTotal =
+                    price * quantity;
+
+
+                  return `
+
+                    <tr>
+
+                      <td>
+                        <strong>
+                          ${escapeHtml(product)}
+                        </strong>
+                      </td>
+
+                      <td>
+                        ${escapeHtml(size)}
+                      </td>
+
+                      <td>
+                        ${quantity}
+                      </td>
+
+                      <td>
+                        ₹${price}
+                      </td>
+
+                      <td>
+                        <strong>
+                          ₹${lineTotal}
+                        </strong>
+                      </td>
+
+                    </tr>
+
+                  `;
+
+                }
+              )
+              .join("")
+          : `
+
+              <tr>
+
+                <td colspan="5">
+                  No item details available
+                </td>
+
+              </tr>
+
+            `;
+
+
+      const status =
+        VALID_STATUS(order.status)
+          ? order.status
+          : "Pending";
+
+
+      return `
+
+        <article
+          class="order-card"
+          data-order-id="${order.id}"
+        >
+
+
+          <div class="order-top">
+
+
+            <div class="order-number">
+
+              <div class="order-number-icon">
+                📦
+              </div>
+
+              <div>
+
+                <strong>
+                  Order #${escapeHtml(order.id)}
+                </strong>
+
+                <span class="order-time">
+                  ${escapeHtml(
+                    formatDateTime(
+                      order.createdAt
+                    )
+                  )}
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <select
+              class="status-select ${statusClass(status)}"
+              data-order-id="${order.id}"
+            >
+
+              <option
+                value="Pending"
+                ${status === "Pending" ? "selected" : ""}
+              >
+                🟡 Pending
+              </option>
+
+              <option
+                value="Preparing"
+                ${status === "Preparing" ? "selected" : ""}
+              >
+                🔵 Preparing
+              </option>
+
+              <option
+                value="Out for Delivery"
+                ${status === "Out for Delivery" ? "selected" : ""}
+              >
+                🟠 Out for Delivery
+              </option>
+
+              <option
+                value="Delivered"
+                ${status === "Delivered" ? "selected" : ""}
+              >
+                🟢 Delivered
+              </option>
+
+            </select>
+
+
+          </div>
+
+
+
+          <div class="order-body">
+
+
+            <div class="customer-grid">
+
+
+              <div class="customer-box">
+
+                <label>
+                  👤 CUSTOMER
+                </label>
+
+                <strong>
+                  ${escapeHtml(
+                    order.customerName
+                  )}
+                </strong>
+
+              </div>
+
+
+              <div class="customer-box">
+
+                <label>
+                  📱 PHONE
+                </label>
+
+                <strong>
+                  ${escapeHtml(
+                    order.phone
+                  )}
+                </strong>
+
+              </div>
+
+
+              <div class="customer-box">
+
+                <label>
+                  📅 DELIVERY DATE
+                </label>
+
+                <strong>
+                  ${escapeHtml(
+                    formatDate(
+                      order.deliveryDate
+                    )
+                  )}
+                </strong>
+
+              </div>
+
+
+              <div
+                class="customer-box"
+                style="grid-column: 1 / -1;"
+              >
+
+                <label>
+                  🏠 DELIVERY ADDRESS
+                </label>
+
+                <strong>
+                  ${escapeHtml(
+                    order.address
+                  )}
+                </strong>
+
+              </div>
+
+
+            </div>
+
+
+
+            <div class="items-title">
+              🛒 ORDER ITEMS
+            </div>
+
+
+            <table class="items-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    Product
+                  </th>
+
+                  <th>
+                    Size
+                  </th>
+
+                  <th>
+                    Qty
+                  </th>
+
+                  <th>
+                    Price
+                  </th>
+
+                  <th>
+                    Amount
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                ${itemsHtml}
+
+              </tbody>
+
+            </table>
+
+
+
+            <div class="order-bottom">
+
+
+              <div>
+
+                <span class="payment-badge">
+
+                  ${paymentIcon(
+                    order.paymentMethod
+                  )}
+
+                  ${escapeHtml(
+                    order.paymentMethod
+                  )}
+
+                </span>
+
+              </div>
+
+
+              <div class="total-box">
+
+                <span>
+                  ORDER TOTAL
+                </span>
+
+                <strong>
+                  ₹${Number(
+                    order.total || 0
+                  )}
+                </strong>
+
+              </div>
+
+
+            </div>
+
+
+
+            <div class="order-actions">
+
+              <button
+                class="delete-btn"
+                data-delete-id="${order.id}"
+              >
+                🗑️ Delete Order
+              </button>
+
+            </div>
+
+
+          </div>
+
+
+        </article>
+
+      `;
+
+    }
+
+
+    /* =====================================================
+       VALID STATUS
+    ===================================================== */
+
+    function VALID_STATUS(status) {
+
+      return [
+        "Pending",
+        "Preparing",
+        "Out for Delivery",
+        "Delivered"
+      ].includes(status);
+
+    }
+
+
+    /* =====================================================
+       UPDATE STATUS CLASS
+    ===================================================== */
+
+    function updateStatusSelectStyle(select) {
+
+      select.classList.remove(
+        "pending",
+        "preparing",
+        "out-for-delivery",
+        "delivered"
+      );
+
+
+      select.classList.add(
+        statusClass(
+          select.value
+        )
+      );
+
+    }
+
+
+    /* =====================================================
+       ATTACH EVENTS
+    ===================================================== */
+
+    function attachOrderEvents() {
+
+
+      document
+        .querySelectorAll(
+          ".status-select"
+        )
+        .forEach(
+          select => {
+
+            select.addEventListener(
+              "change",
+              async () => {
+
+                await updateOrderStatus(
+                  select.dataset.orderId,
+                  select.value
+                );
+
+              }
+            );
+
+          }
+        );
+
+
+      document
+        .querySelectorAll(
+          ".delete-btn"
+        )
+        .forEach(
+          button => {
+
+            button.addEventListener(
+              "click",
+              async () => {
+
+                await deleteOrder(
+                  button.dataset.deleteId
+                );
+
+              }
+            );
+
+          }
+        );
+
+    }
+
+
+    /* =====================================================
+       UPDATE ORDER STATUS
+    ===================================================== */
+
+    async function updateOrderStatus(
+      id,
+      status
+    ) {
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/orders/${id}`,
+            {
+              method: "PUT",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify({
+                  status
+                })
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.error ||
+            "Unable to update status."
+          );
+
+        }
+
+
+        const order =
+          allOrders.find(
+            item =>
+              String(item.id) ===
+              String(id)
+          );
+
+
+        if (order) {
+          order.status = status;
+        }
+
+
+        updateSummary();
+
+        renderOrders();
+
+
+      } catch (error) {
+
+        console.error(
+          error
+        );
+
+        alert(
+          `❌ ${error.message}`
+        );
+
+        await loadOrders();
+
+      }
+
+    }
+
+
+    /* =====================================================
+       DELETE ORDER
+    ===================================================== */
+
+    async function deleteOrder(id) {
+
+      const confirmed =
+        confirm(
+          `Delete Order #${id}?\n\nThis cannot be undone.`
+        );
+
+
+      if (!confirmed) {
+        return;
+      }
+
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/orders/${id}`,
+            {
+              method: "DELETE"
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.error ||
+            "Unable to delete order."
+          );
+
+        }
+
+
+        allOrders =
+          allOrders.filter(
+            order =>
+              String(order.id) !==
+              String(id)
+          );
+
+
+        updateSummary();
+
+        renderOrders();
+
+
+      } catch (error) {
+
+        console.error(
+          error
+        );
+
+        alert(
+          `❌ ${error.message}`
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       FILTER
+    ===================================================== */
+
+    statusFilter.addEventListener(
+      "change",
+      renderOrders
+    );
+
+
+    /* =====================================================
+       REFRESH
+    ===================================================== */
+
+    refreshBtn.addEventListener(
+      "click",
+      loadOrders
+    );
+
+
+    /* =====================================================
+       INITIAL LOAD
+    ===================================================== */
+
+    loadOrders();
+
+  </script>
+
+</body>
+</html>
