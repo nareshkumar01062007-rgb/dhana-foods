@@ -521,7 +521,7 @@ app.use("/api", (req, res) => {
    START SERVER (local only - Vercel uses the exported app)
 ========================================================= */
 
-if (!process.env.VERCEL) {
+if (require.main === module) {
   app.listen(PORT, HOST, () => {
     console.log("========================================");
     console.log("🥣 DHANA FOODS SERVER STARTED");
