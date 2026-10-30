@@ -868,55 +868,176 @@ document.addEventListener("DOMContentLoaded", () => {
 
         }
 
+try {
 
-        try {
+  let data = null;
 
-          const response =
-            await fetch(
-              "/api/orders",
-              {
-                method: "POST",
+  // =========================================
+  // RAZORPAY ONLINE PAYMENT
+  // =========================================
 
-                headers: {
-                  "Content-Type":
-                    "application/json"
-                },
+  if (paymentMethod === "Razorpay") {
 
-                body:
-                  JSON.stringify(
-                    orderData
-                  )
-              }
-            );
+    if (!window.Razorpay) {
+      throw new Error("Razorpay checkout could not load. Please refresh and try again.");
+    }
 
+    // Create Razorpay order on backend
+    const createResponse = await fetch(
+      "/api/payment/create-order",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(orderData)
+      }
+    );
 
-          let data = null;
+    const createData = await createResponse.json();
 
+    if (!createResponse.ok || !createData.success) {
+      throw new Error(
+        createData.error || "Unable to create payment order."
+      );
+    }
+
+    // Open Razorpay Checkout
+    data = await new Promise((resolve, reject) => {
+
+      let completed = false;
+
+      const finish = (callback, value) => {
+        if (completed) return;
+        completed = true;
+        callback(value);
+      };
+
+      const options = {
+        key: createData.key,
+        amount: createData.razorpayOrder.amount,
+        currency: createData.razorpayOrder.currency,
+        name: "DHANA FOODS",
+        description: "Fresh Homemade Batter Order",
+        order_id: createData.razorpayOrder.id,
+
+        prefill: {
+          name: customerName,
+          contact: phone
+        },
+
+        theme: {
+          color: "#2e7d32"
+        },
+
+        handler: async function (paymentResponse) {
 
           try {
 
-            data =
-              await response.json();
+            // Verify payment on backend
+            const verifyResponse = await fetch(
+              "/api/payment/verify",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  razorpay_order_id:
+                    paymentResponse.razorpay_order_id,
 
-          } catch {
+                  razorpay_payment_id:
+                    paymentResponse.razorpay_payment_id,
 
-            data = null;
+                  razorpay_signature:
+                    paymentResponse.razorpay_signature,
 
-          }
-
-
-          if (!response.ok) {
-
-            const serverMessage =
-              data?.error ||
-              data?.message ||
-              "Unable to place your order.";
-
-            throw new Error(
-              serverMessage
+                  orderId: createData.orderId
+                })
+              }
             );
 
+            const verifyData = await verifyResponse.json();
+
+            if (!verifyResponse.ok || !verifyData.success) {
+              throw new Error(
+                verifyData.error || "Payment verification failed."
+              );
+            }
+
+            finish(resolve, {
+              order: {
+                id: createData.orderId
+              }
+            });
+
+          } catch (error) {
+            finish(reject, error);
           }
+
+        },
+
+        modal: {
+          ondismiss: function () {
+            finish(
+              reject,
+              new Error("Payment cancelled. Your cart is still saved.")
+            );
+          }
+        }
+      };
+
+      const checkout = new window.Razorpay(options);
+
+      checkout.on("payment.failed", function (response) {
+        finish(
+          reject,
+          new Error(
+            response.error?.description || "Payment failed. Please try again."
+          )
+        );
+      });
+
+      checkout.open();
+
+    });
+
+  }
+
+  // =========================================
+  // CASH ON DELIVERY
+  // =========================================
+
+  else {
+
+    const response = await fetch(
+      "/api/orders",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(orderData)
+      }
+    );
+
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+        data?.message ||
+        "Unable to place your order."
+      );
+    }
+
+  }
+
+
 
 
           /* =============================================

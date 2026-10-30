@@ -2,11 +2,16 @@
    DHANA FOODS
    MongoDB Order Server (works locally AND on Vercel)
 ========================================================= */
-
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
+const crypto = require("crypto");
 const { MongoClient, ObjectId } = require("mongodb");
-require("dotenv").config();
+const Razorpay = require("razorpay");
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
 
 const app = express();
 
@@ -238,6 +243,258 @@ app.get("/health", async (req, res) => {
 
 app.get("/api/products", (req, res) => {
   res.json(PRODUCTS);
+});
+/* =========================================================
+   RAZORPAY - CREATE PAYMENT ORDER
+========================================================= */
+
+/* =========================================================
+   RAZORPAY - CREATE PAYMENT ORDER
+========================================================= */
+
+app.post("/api/payment/create-order", async (req, res) => {
+  try {
+    const {
+      customerName,
+      phone,
+      address,
+      items,
+      deliveryDate
+    } = req.body;
+
+    // Customer validation
+    if (!customerName || !String(customerName).trim()) {
+      return badRequest(res, "Customer name is required.");
+    }
+
+    const cleanPhone = String(phone || "").replace(/\D/g, "");
+
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      return badRequest(res, "Enter a valid mobile number.");
+    }
+
+    if (!address || !String(address).trim()) {
+      return badRequest(res, "Delivery address is required.");
+    }
+
+    if (!deliveryDate || !String(deliveryDate).trim()) {
+      return badRequest(res, "Delivery date is required.");
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return badRequest(res, "Please select products.");
+    }
+
+    // Validate products and calculate official price
+    const normalizedItems = [];
+
+    for (const item of items) {
+      const product = normalizeProductName(item.product);
+      const size = String(item.size || "").trim();
+      const quantity = Number(item.quantity);
+
+      if (!PRODUCTS[product]) {
+        return badRequest(res, "Invalid product.");
+      }
+
+      if (size !== "500g" && size !== "1kg") {
+        return badRequest(res, "Invalid product size.");
+      }
+
+      if (!Number.isInteger(quantity) || quantity <= 0 || quantity > 100) {
+        return badRequest(res, "Invalid quantity.");
+      }
+
+      normalizedItems.push({
+        product,
+        size,
+        quantity,
+        price: getOfficialPrice(product, size)
+      });
+    }
+
+    const total = calculateTotal(normalizedItems);
+
+    // Create Razorpay order
+    const razorpayOrder = await razorpay.orders.create({
+      amount: Math.round(total * 100),
+      currency: "INR",
+      receipt: `dhana_${Date.now()}`
+    });
+
+    // Save pending order in MongoDB
+    const ordersCollection = await getOrders();
+
+    const order = {
+      id: new ObjectId().toString(),
+      customerName: String(customerName).trim(),
+      phone: cleanPhone,
+      address: String(address).trim(),
+      items: normalizedItems,
+      total,
+      deliveryDate: String(deliveryDate).trim(),
+      paymentMethod: "Razorpay",
+      paymentStatus: "Pending",
+      razorpayOrderId: razorpayOrder.id,
+      razorpayPaymentId: null,
+      status: "Pending",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    await ordersCollection.insertOne(order);
+
+    return res.status(201).json({
+      success: true,
+      key: process.env.RAZORPAY_KEY_ID,
+      razorpayOrder,
+      orderId: order.id,
+      total
+    });
+
+  } catch (error) {
+    console.error("Create payment order error:", error);
+
+    return res.status(500).json({
+      error: "Unable to create payment order."
+    });
+  }
+});
+/* =========================================================
+   /* =========================================================
+   RAZORPAY - VERIFY PAYMENT & UPDATE DATABASE
+========================================================= */
+
+app.post("/api/payment/verify", async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      orderId
+    } = req.body;
+
+    if (
+      !razorpay_order_id ||
+      !razorpay_payment_id ||
+      !razorpay_signature ||
+      !orderId
+    ) {
+      return badRequest(res, "Missing payment details.");
+    }
+
+    // 1. Verify Razorpay signature
+    const generatedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    const expectedBuffer = Buffer.from(generatedSignature, "hex");
+    const receivedBuffer = Buffer.from(razorpay_signature, "hex");
+
+    if (
+      expectedBuffer.length !== receivedBuffer.length ||
+      !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment verification failed."
+      });
+    }
+
+    // 2. Find matching pending order
+    const ordersCollection = await getOrders();
+
+    const order = await ordersCollection.findOne({
+      id: orderId,
+      razorpayOrderId: razorpay_order_id
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found."
+      });
+    }
+
+    // 3. Prevent duplicate payment processing
+    if (order.paymentStatus === "Paid") {
+      if (order.razorpayPaymentId === razorpay_payment_id) {
+        return res.json({
+          success: true,
+          message: "Payment already verified.",
+          paymentId: razorpay_payment_id
+        });
+      }
+
+      return res.status(409).json({
+        success: false,
+        message: "This order has already been paid."
+      });
+    }
+
+    // 4. Fetch payment details directly from Razorpay
+    const payment = await razorpay.payments.fetch(
+      razorpay_payment_id
+    );
+
+    if (
+      payment.order_id !== razorpay_order_id ||
+      payment.amount !== Math.round(order.total * 100) ||
+      payment.currency !== "INR"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment details do not match."
+      });
+    }
+
+    if (payment.status !== "captured") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment is not captured yet."
+      });
+    }
+
+    // 5. Update MongoDB only after verification
+    const result = await ordersCollection.updateOne(
+      {
+        id: orderId,
+        razorpayOrderId: razorpay_order_id,
+        paymentStatus: "Pending"
+      },
+      {
+        $set: {
+          paymentStatus: "Paid",
+          paymentMethod: "Razorpay",
+          razorpayPaymentId: razorpay_payment_id,
+          status: "Pending",
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Order payment status could not be updated."
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Payment verified successfully.",
+      paymentId: razorpay_payment_id
+    });
+
+  } catch (error) {
+    console.error("Payment verification error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to verify payment."
+    });
+  }
 });
 
 

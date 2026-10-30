@@ -1686,6 +1686,36 @@
                 >
 
               </div>
+              <!-- PAYMENT METHOD -->
+
+<div class="form-group">
+
+  <label>💳 Select Payment Method</label>
+
+  <div class="payment-options">
+
+    <label>
+      <input
+        type="radio"
+        name="paymentMethod"
+        value="COD"
+        checked
+      >
+      Cash on Delivery
+    </label>
+
+    <label>
+      <input
+        type="radio"
+        name="paymentMethod"
+        value="Razorpay"
+      >
+      Pay Online (Razorpay)
+    </label>
+
+  </div>
+
+</div>
 
 
               <div class="order-summary-box">
@@ -1903,6 +1933,7 @@
 
 
   <!-- ================= SCRIPT ================= -->
+   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <script src="script.js?v=30"></script>
 
