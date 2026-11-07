@@ -3,13 +3,13 @@
    Customer Cart + Order System
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
   /* =======================================================
      PRODUCT PRICES
   ======================================================= */
 
-  const PRODUCTS = {
+  let PRODUCTS = {
     "Idli Batter": {
       "500g": 25,
       "1kg": 45
@@ -76,6 +76,57 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  // Load the live catalogue from MongoDB-backed API. Keep the bundled
+  // catalogue as a fallback if the network is temporarily unavailable.
+  try {
+    const response = await fetch("/api/products", { cache: "no-store" });
+    if (response.ok) {
+      const liveCatalogue = await response.json();
+      if (liveCatalogue && typeof liveCatalogue === "object" && Object.keys(liveCatalogue).length) {
+        PRODUCTS = liveCatalogue;
+        const grid = document.querySelector(".product-grid");
+        if (grid) {
+          const existingNames = new Set(
+            [...grid.querySelectorAll(".product-card h3")].map(h => h.textContent.trim())
+          );
+          // Add products created by the admin that do not have a hard-coded legacy card.
+          Object.entries(PRODUCTS).forEach(([name, sizes]) => {
+            if (existingNames.has(name)) return;
+            const card = document.createElement("article");
+            card.className = "product-card";
+            card.innerHTML = `
+              <div class="product-icon">🥣</div>
+              <div class="product-content">
+                <span class="product-tag">FRESH</span>
+                <h3>${escapeHtml(name)}</h3>
+                <p>Fresh homemade batter.</p>
+                <div class="product-prices">
+                  <label>500g <strong>₹${Number(sizes["500g"]) || 0}</strong></label>
+                  <label>1kg <strong>₹${Number(sizes["1kg"]) || 0}</strong></label>
+                </div>
+                <div class="product-quantity"><label>500g Quantity</label>
+                  <input type="number" min="0" value="0" class="product-qty" data-product="${escapeHtml(name)}" data-size="500g"></div>
+                <div class="product-quantity"><label>1kg Quantity</label>
+                  <input type="number" min="0" value="0" class="product-qty" data-product="${escapeHtml(name)}" data-size="1kg"></div>
+              </div>`;
+            grid.appendChild(card);
+          });
+          // Update prices on the original cards from the database.
+          grid.querySelectorAll(".product-card").forEach(card => {
+            const title = card.querySelector("h3")?.textContent.trim();
+            const sizes = PRODUCTS[title];
+            if (!sizes) { card.style.display = "none"; return; }
+            card.style.display = "";
+            const priceLabels = card.querySelectorAll(".product-prices strong");
+            if (priceLabels[0]) priceLabels[0].textContent = `₹${sizes["500g"]}`;
+            if (priceLabels[1]) priceLabels[1].textContent = `₹${sizes["1kg"]}`;
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.warn("Using fallback product catalogue:", error);
+  }
 
   /* =======================================================
      PRODUCT ALIASES
@@ -888,7 +939,8 @@ try {
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...(sessionStorage.getItem("dhanaCustomerToken") ? { "Authorization": `Bearer ${sessionStorage.getItem("dhanaCustomerToken")}` } : {})
         },
         body: JSON.stringify(orderData)
       }
@@ -1015,7 +1067,8 @@ try {
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...(sessionStorage.getItem("dhanaCustomerToken") ? { "Authorization": `Bearer ${sessionStorage.getItem("dhanaCustomerToken")}` } : {})
         },
         body: JSON.stringify(orderData)
       }

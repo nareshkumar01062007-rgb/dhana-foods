@@ -473,6 +473,18 @@
       border-color: #f1d96d;
     }
 
+    .status-select.confirmed {
+      color: #27713d;
+      background: #e7f7e9;
+      border-color: #9bd2a3;
+    }
+
+    .status-select.cancelled {
+      color: #a12d2d;
+      background: #fff0f0;
+      border-color: #e5aaaa;
+    }
+
     .status-select.preparing {
       color: #23677c;
 
@@ -926,6 +938,7 @@
 
 
       <div class="header-actions">
+        <button class="header-btn" id="logoutBtn" type="button">Logout</button>
 
         <button
           class="header-btn"
@@ -966,6 +979,69 @@
 
 
     <!-- ================= SUMMARY ================= -->
+
+    <section class="product-management" style="background:#fff;padding:24px;border-radius:20px;margin:0 0 26px;box-shadow:0 10px 30px rgba(30,60,35,.07);">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;">
+        <div><span style="color:#267343;font-size:.75rem;font-weight:900;letter-spacing:1px;">STORE CATALOGUE</span>
+          <h2 style="color:#174b2a;margin-top:4px;">Product Management</h2>
+          <p style="color:#6b776e;margin-top:4px;">Add products, update prices and control availability.</p></div>
+        <button type="button" class="refresh-btn" id="newProductBtn">＋ Add Product</button>
+      </div>
+      <form id="productForm" style="display:none;background:#f7faf6;padding:18px;border-radius:14px;margin-bottom:18px;">
+        <input type="hidden" id="productId">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+          <label>Product name<input id="productName" required maxlength="100" style="display:block;width:100%;padding:11px;border:1px solid #dce6dd;border-radius:9px;margin-top:5px;"></label>
+          <label>Icon / emoji<input id="productIcon" value="🥣" maxlength="8" style="display:block;width:100%;padding:11px;border:1px solid #dce6dd;border-radius:9px;margin-top:5px;"></label>
+          <label>Schedule tag<input id="productSchedule" value="FRESH" maxlength="40" style="display:block;width:100%;padding:11px;border:1px solid #dce6dd;border-radius:9px;margin-top:5px;"></label>
+          <label>500g price (₹)<input id="price500" type="number" min="1" step="0.01" required style="display:block;width:100%;padding:11px;border:1px solid #dce6dd;border-radius:9px;margin-top:5px;"></label>
+          <label>1kg price (₹)<input id="price1kg" type="number" min="1" step="0.01" required style="display:block;width:100%;padding:11px;border:1px solid #dce6dd;border-radius:9px;margin-top:5px;"></label>
+          <label>Availability<select id="productStock" style="display:block;width:100%;padding:11px;border:1px solid #dce6dd;border-radius:9px;margin-top:5px;"><option>Available</option><option>Out of Stock</option></select></label>
+          <label style="grid-column:1/-1;">Description<input id="productDescription" maxlength="250" style="display:block;width:100%;padding:11px;border:1px solid #dce6dd;border-radius:9px;margin-top:5px;"></label>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+          <button type="submit" class="refresh-btn" id="saveProductBtn">Save Product</button>
+          <button type="button" class="header-btn" id="cancelProductBtn" style="background:#e9eee9;color:#34513b;">Cancel</button>
+        </div>
+        <p id="productFormMessage" role="status" style="margin-top:10px;"></p>
+      </form>
+      <div id="productsAdminList" style="display:grid;gap:10px;"><p class="loading">Loading products…</p></div>
+    </section>
+
+    <!-- ================= BUSINESS ANALYTICS ================= -->
+    <section id="businessAnalytics" style="background:#fff;padding:24px;border-radius:20px;margin:0 0 26px;box-shadow:0 10px 30px rgba(30,60,35,.07);">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;">
+        <div><span style="color:#267343;font-size:.75rem;font-weight:900;letter-spacing:1px;">BUSINESS INSIGHTS</span>
+          <h2 style="color:#174b2a;margin-top:4px;">📊 Business Analytics</h2>
+          <p style="color:#6b776e;margin-top:4px;">Track collected revenue, order performance and popular products.</p></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <label for="analyticsPeriod" style="font-weight:700;color:#34513b;">Period</label>
+          <select id="analyticsPeriod" style="padding:10px;border:1px solid #dce6dd;border-radius:9px;"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="all">All time</option></select>
+          <button type="button" class="refresh-btn" id="refreshAnalyticsBtn">↻ Refresh</button>
+        </div>
+      </div>
+      <p id="analyticsMessage" role="status" style="color:#6b776e;margin-bottom:12px;">Loading analytics…</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px;">
+        <div style="background:#f2f8f2;padding:16px;border-radius:13px;"><span style="color:#637267;font-size:.88rem;">Collected Revenue</span><strong id="analyticsRevenue" style="display:block;font-size:1.6rem;color:#174b2a;margin-top:6px;">₹0</strong></div>
+        <div style="background:#f2f8f2;padding:16px;border-radius:13px;"><span style="color:#637267;font-size:.88rem;">Total Orders</span><strong id="analyticsOrders" style="display:block;font-size:1.6rem;color:#174b2a;margin-top:6px;">0</strong></div>
+        <div style="background:#f2f8f2;padding:16px;border-radius:13px;"><span style="color:#637267;font-size:.88rem;">Delivered Orders</span><strong id="analyticsDelivered" style="display:block;font-size:1.6rem;color:#174b2a;margin-top:6px;">0</strong></div>
+        <div style="background:#fff3f1;padding:16px;border-radius:13px;"><span style="color:#8b625d;font-size:.88rem;">Cancelled Orders</span><strong id="analyticsCancelled" style="display:block;font-size:1.6rem;color:#9b3024;margin-top:6px;">0</strong></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;">
+        <div style="border:1px solid #e7eee7;border-radius:14px;padding:16px;min-width:0;">
+          <h3 style="color:#174b2a;margin-bottom:12px;">Sales Trend</h3>
+          <div id="salesChart" style="display:flex;align-items:flex-end;gap:8px;height:170px;overflow-x:auto;padding:8px 2px 24px;"><span style="color:#78847a;">Loading…</span></div>
+          <p style="font-size:.78rem;color:#78847a;">Collected revenue by order date. COD is counted after delivery; Razorpay after successful payment.</p>
+        </div>
+        <div style="border:1px solid #e7eee7;border-radius:14px;padding:16px;">
+          <h3 style="color:#174b2a;margin-bottom:12px;">Order Status</h3>
+          <div id="analyticsStatuses" style="display:grid;gap:9px;"></div>
+        </div>
+        <div style="border:1px solid #e7eee7;border-radius:14px;padding:16px;">
+          <h3 style="color:#174b2a;margin-bottom:12px;">Best-selling Products</h3>
+          <div id="topProductsList" style="display:grid;gap:10px;"><span style="color:#78847a;">Loading…</span></div>
+        </div>
+      </div>
+    </section>
 
     <section class="summary-grid">
 
@@ -1062,6 +1138,7 @@
             🟡 Pending
           </option>
 
+          <option value="Confirmed">🟢 Confirmed</option>
           <option value="Preparing">
             🔵 Preparing
           </option>
@@ -1073,6 +1150,7 @@
           <option value="Delivered">
             🟢 Delivered
           </option>
+          <option value="Cancelled">🔴 Cancelled</option>
 
         </select>
 
@@ -1114,6 +1192,166 @@
 
 
   <script>
+
+    async function loadBusinessAnalytics() {
+      const message = document.getElementById("analyticsMessage");
+      message.textContent = "Loading analytics…";
+      try {
+        const days = document.getElementById("analyticsPeriod").value;
+        const response = await fetch(`/api/admin/analytics?days=${encodeURIComponent(days)}`, {
+          cache: "no-store", headers: { Authorization: `Bearer ${sessionStorage.getItem("dhanaAdminToken") || ""}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `Server returned ${response.status}`);
+        const money = value => `₹${Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+        document.getElementById("analyticsRevenue").textContent = money(data.revenue);
+        document.getElementById("analyticsOrders").textContent = data.totalOrders;
+        document.getElementById("analyticsDelivered").textContent = data.deliveredOrders;
+        document.getElementById("analyticsCancelled").textContent = data.cancelledOrders;
+        const statuses = document.getElementById("analyticsStatuses");
+        statuses.innerHTML = Object.entries(data.statusCounts || {}).map(([name, count]) => `<div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #edf1ed;padding:5px 0;"><span>${name}</span><strong>${count}</strong></div>`).join("");
+        const chart = document.getElementById("salesChart");
+        const sales = data.dailySales || [];
+        if (!sales.length) chart.innerHTML = `<span style="color:#78847a;align-self:center;">No collected sales in this period yet.</span>`;
+        else {
+          const max = Math.max(...sales.map(item => Number(item.amount || 0)), 1);
+          chart.innerHTML = sales.slice(-14).map(item => {
+            const height = Math.max(4, Number(item.amount || 0) / max * 125);
+            const label = new Date(`${item.date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+            return `<div title="${label}: ${money(item.amount)}" style="min-width:30px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:5px;"><div style="width:100%;max-width:34px;height:${height}px;background:#267343;border-radius:6px 6px 2px 2px;"></div><small style="font-size:10px;color:#68756b;white-space:nowrap;">${label}</small></div>`;
+          }).join("");
+        }
+        const products = document.getElementById("topProductsList");
+        products.innerHTML = data.topProducts?.length ? data.topProducts.map((item, index) => `<div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #edf1ed;padding:7px 0;"><span>${index + 1}. ${escapeAnalyticsText(item.name)}</span><strong>${Number(item.quantity || 0)} sold</strong></div>`).join("") : `<span style="color:#78847a;">No product sales yet.</span>`;
+        message.textContent = `${data.revenueOrderCount} orders included in collected revenue. ${days === "all" ? "All-time" : `Last ${days} days`} summary.`;
+      } catch (error) {
+        console.error("Analytics load error:", error);
+        message.textContent = `Unable to load analytics: ${error.message}`;
+      }
+    }
+    function escapeAnalyticsText(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+    }
+    document.getElementById("analyticsPeriod").addEventListener("change", loadBusinessAnalytics);
+    document.getElementById("refreshAnalyticsBtn").addEventListener("click", loadBusinessAnalytics);
+
+    const adminToken = sessionStorage.getItem("dhanaAdminToken");
+    if (!adminToken) {
+      window.location.replace("admin-login.html");
+    }
+
+    // All dashboard API calls carry the server-issued admin token.
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = (resource, options = {}) => {
+      const url = typeof resource === "string" ? resource : resource.url;
+      if (url.startsWith("/api/")) {
+        const headers = new Headers(options.headers || (resource instanceof Request ? resource.headers : undefined));
+        headers.set("Authorization", `Bearer ${adminToken || ""}`);
+        options = { ...options, headers };
+      }
+      return originalFetch(resource, options).then((response) => {
+        if (response.status === 401 && url.startsWith("/api/")) {
+          sessionStorage.removeItem("dhanaAdminToken");
+          window.location.replace("admin-login.html");
+        }
+        return response;
+      });
+    };
+
+    fetch("/api/admin/me", { cache: "no-store" }).catch(() => {});
+    document.getElementById("logoutBtn")?.addEventListener("click", () => {
+      sessionStorage.removeItem("dhanaAdminToken");
+      window.location.replace("admin-login.html");
+    });
+
+    // Product catalogue management (write routes require admin token).
+    const productForm = document.getElementById("productForm");
+    const productsAdminList = document.getElementById("productsAdminList");
+    const productFormMessage = document.getElementById("productFormMessage");
+    let managedProducts = [];
+
+    function productMessage(message, isError = false) {
+      productFormMessage.textContent = message;
+      productFormMessage.style.color = isError ? "#b42318" : "#267343";
+    }
+    function resetProductForm() {
+      productForm.reset();
+      document.getElementById("productId").value = "";
+      document.getElementById("productIcon").value = "🥣";
+      document.getElementById("productSchedule").value = "FRESH";
+      document.getElementById("productStock").value = "Available";
+      document.getElementById("saveProductBtn").textContent = "Save Product";
+      productMessage("");
+      productForm.style.display = "none";
+    }
+    async function loadManagedProducts() {
+      try {
+        const response = await fetch("/api/admin/products", { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load products.");
+        managedProducts = data;
+        productsAdminList.innerHTML = data.map(product => `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px;border:1px solid #e5ece5;border-radius:13px;">
+            <div style="min-width:180px;flex:1;"><strong>${escapeHtml(product.icon)} ${escapeHtml(product.name)}</strong>
+              <div style="color:#68776c;font-size:.82rem;margin-top:4px;">500g ₹${Number(product.sizes["500g"])} · 1kg ₹${Number(product.sizes["1kg"])} · ${escapeHtml(product.stockStatus)} · ${product.active ? "Active" : "Hidden"}</div></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="refresh-btn" data-edit-product="${product.id}">Edit</button>
+              ${product.active ? `<button type="button" class="delete-btn" data-hide-product="${product.id}">Remove</button>` : ""}</div>
+          </div>`).join("") || "<p>No products found.</p>";
+        productsAdminList.querySelectorAll("[data-edit-product]").forEach(button => button.addEventListener("click", () => editProduct(button.dataset.editProduct)));
+        productsAdminList.querySelectorAll("[data-hide-product]").forEach(button => button.addEventListener("click", () => hideProduct(button.dataset.hideProduct)));
+      } catch (error) { productsAdminList.innerHTML = `<p class="error-box">${escapeHtml(error.message)}</p>`; }
+    }
+    function editProduct(id) {
+      const product = managedProducts.find(item => item.id === id);
+      if (!product) return;
+      document.getElementById("productId").value = product.id;
+      document.getElementById("productName").value = product.name;
+      document.getElementById("productIcon").value = product.icon;
+      document.getElementById("productSchedule").value = product.schedule;
+      document.getElementById("price500").value = product.sizes["500g"];
+      document.getElementById("price1kg").value = product.sizes["1kg"];
+      document.getElementById("productStock").value = product.stockStatus;
+      document.getElementById("productDescription").value = product.description;
+      document.getElementById("saveProductBtn").textContent = "Update Product";
+      productForm.style.display = "block";
+      productForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    async function hideProduct(id) {
+      if (!confirm("Remove this product from the customer store? Past orders will be preserved.")) return;
+      try {
+        const response = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to remove product.");
+        await loadManagedProducts();
+      } catch (error) { alert(error.message); }
+    }
+    document.getElementById("newProductBtn").addEventListener("click", () => {
+      resetProductForm(); productForm.style.display = "block";
+      productForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    document.getElementById("cancelProductBtn").addEventListener("click", resetProductForm);
+    productForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      const id = document.getElementById("productId").value;
+      const payload = {
+        name: document.getElementById("productName").value.trim(),
+        icon: document.getElementById("productIcon").value.trim(),
+        schedule: document.getElementById("productSchedule").value.trim(),
+        description: document.getElementById("productDescription").value.trim(),
+        stockStatus: document.getElementById("productStock").value,
+        sizes: { "500g": Number(document.getElementById("price500").value), "1kg": Number(document.getElementById("price1kg").value) }
+      };
+      try {
+        const response = await fetch(id ? `/api/admin/products/${id}` : "/api/admin/products", {
+          method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to save product.");
+        await loadManagedProducts(); resetProductForm();
+        alert(id ? "Product updated successfully." : "Product added successfully.");
+      } catch (error) { productMessage(error.message, true); }
+    });
+    loadManagedProducts();
 
     /* =====================================================
        STATE
@@ -1461,6 +1699,10 @@
         return "pending";
       }
 
+      if (status === "Confirmed") {
+        return "confirmed";
+      }
+
       if (status === "Preparing") {
         return "preparing";
       }
@@ -1471,6 +1713,10 @@
 
       if (status === "Delivered") {
         return "delivered";
+      }
+
+      if (status === "Cancelled") {
+        return "cancelled";
       }
 
       return "pending";
@@ -1699,6 +1945,8 @@
                 🟡 Pending
               </option>
 
+              <option value="Confirmed" ${status === "Confirmed" ? "selected" : ""}>🟢 Confirmed</option>
+
               <option
                 value="Preparing"
                 ${status === "Preparing" ? "selected" : ""}
@@ -1719,6 +1967,8 @@
               >
                 🟢 Delivered
               </option>
+
+              <option value="Cancelled" ${status === "Cancelled" ? "selected" : ""}>🔴 Cancelled</option>
 
             </select>
 
@@ -1915,10 +2165,8 @@
     function VALID_STATUS(status) {
 
       return [
-        "Pending",
-        "Preparing",
-        "Out for Delivery",
-        "Delivered"
+        "Pending", "Confirmed", "Preparing",
+        "Out for Delivery", "Delivered", "Cancelled"
       ].includes(status);
 
     }
@@ -2174,6 +2422,7 @@
        INITIAL LOAD
     ===================================================== */
 
+    loadBusinessAnalytics();
     loadOrders();
 
   </script>

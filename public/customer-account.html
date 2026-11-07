@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Account | Dhana Foods</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:#fffaf0;font-family:Arial,sans-serif;color:#263126;display:flex;align-items:center;justify-content:center;padding:20px}
+    .wrap{width:100%;max-width:460px;background:#fff;padding:30px;border-radius:18px;box-shadow:0 12px 35px #00000012}.brand{text-align:center;font-size:28px;font-weight:700;color:#286b37}.sub{text-align:center;color:#687368;margin:8px 0 24px}
+    .tabs{display:flex;gap:8px;margin-bottom:20px}.tabs button{flex:1;padding:12px;border:1px solid #d9e3d7;background:#f5f8f3;border-radius:10px;cursor:pointer}.tabs button.active{background:#286b37;color:#fff}
+    label{display:block;font-size:14px;margin:13px 0 6px}input{width:100%;padding:13px;border:1px solid #d6ded3;border-radius:9px;font-size:16px}button.primary{width:100%;margin-top:20px;padding:14px;border:0;border-radius:10px;background:#286b37;color:white;font-size:16px;cursor:pointer}button:disabled{opacity:.6;cursor:wait}
+    #message{margin-top:14px;font-size:14px;text-align:center}.muted{color:#687368}.panel{display:none}.panel.show{display:block}.profile{background:#f5f8f3;padding:15px;border-radius:10px;margin:15px 0}.order{border:1px solid #e2e8df;padding:12px;border-radius:10px;margin:10px 0;font-size:14px}.logout{background:#7a332b!important}.back{display:block;text-align:center;margin-top:18px;color:#286b37}
+    .cancel-order-btn {
+  background: #b83232;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 10px 0;
+}
+
+.cancel-order-btn:hover {
+  background: #922525;
+}
+
+.cancel-order-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+  </style>
+</head>
+<body><main class="wrap">
+  <div class="brand">🥣 DHANA FOODS</div><p class="sub">Your account • Your orders</p>
+  <section id="authPanel" class="panel show">
+    <div class="tabs"><button id="loginTab" class="active" type="button">Login</button><button id="registerTab" type="button">Create account</button></div>
+    <form id="authForm">
+      <div id="nameField" style="display:none"><label for="name">Full name</label><input id="name" autocomplete="name" maxlength="80"></div>
+      <label for="email">Email address</label><input id="email" type="email" autocomplete="email" required maxlength="254">
+      <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128">
+      <button class="primary" id="submitBtn">Login</button>
+    </form><div id="message" role="status"></div>
+  </section>
+  <section id="accountPanel" class="panel">
+    <h2>Welcome, <span id="customerName"></span>!</h2><div class="profile"><div id="customerEmail"></div><p class="muted">You are signed in to your Dhana Foods account.</p></div>
+    <h3 id="my-orders">My Orders</h3><button class="refresh-orders" id="refreshOrdersBtn" type="button">↻ Refresh order status</button><div id="orders"><p class="muted">Loading orders...</p></div>
+    <button class="primary logout" id="logoutBtn">Logout</button>
+  </section>
+  <a class="back" href="index.html">← Back to Dhana Foods</a>
+</main>
+<script>
+const $=id=>document.getElementById(id);let mode='login';
+function setMode(next){mode=next;$('loginTab').classList.toggle('active',mode==='login');$('registerTab').classList.toggle('active',mode==='register');$('nameField').style.display=mode==='register'?'block':'none';$('name').required=mode==='register';$('password').autocomplete=mode==='login'?'current-password':'new-password';$('submitBtn').textContent=mode==='login'?'Login':'Create account';$('message').textContent='';}
+$('loginTab').onclick=()=>setMode('login');$('registerTab').onclick=()=>setMode('register');
+$('authForm').addEventListener('submit',async e=>{e.preventDefault();const btn=$('submitBtn');btn.disabled=true;$('message').textContent='Please wait...';try{const body={email:$('email').value.trim(),password:$('password').value};if(mode==='register')body.name=$('name').value.trim();const r=await fetch('/api/customer/'+(mode==='login'?'login':'register'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.error||'Unable to continue.');sessionStorage.setItem('dhanaCustomerToken',d.token);window.location.href='index.html#order';}catch(err){$('message').textContent=err.message;}finally{btn.disabled=false;}});
+const ORDER_STEPS=['Pending','Confirmed','Preparing','Out for Delivery','Delivered'];
+
+function renderCustomerOrders(orders) {
+  $('orders').innerHTML = orders.length
+    ? orders.map(x => {
+        const status = x.status || 'Pending';
+        const index = ORDER_STEPS.indexOf(status);
+
+        const progress = status === 'Cancelled' ? '' :
+          `<div class="order-progress">
+            ${ORDER_STEPS.map((step, i) =>
+              `<span class="${index >= i ? 'done' : ''}"></span>`
+            ).join('')}
+          </div>`;
+
+        const canCancel = ['Pending', 'Confirmed'].includes(status);
+
+        return `
+          <article class="order">
+            <strong>Order #${String(x.id).slice(-8)}</strong>
+            <p class="order-status">
+              ${status === 'Cancelled' ? '🔴' : '📦'} ${status}
+            </p>
+            ${progress}
+            <p>Total: ₹${x.total} • ${x.paymentMethod || 'COD'}</p>
+            <p>${(x.items || []).map(i =>
+              `${i.product} (${i.size}) × ${i.quantity}`
+            ).join(', ')}</p>
+
+            ${canCancel ? `
+              <button class="cancel-order-btn"
+                data-order-id="${x.id}"
+                type="button">
+                Cancel Order
+              </button>
+            ` : ''}
+
+            <small class="muted">
+              Last updated: ${x.updatedAt
+                ? new Date(x.updatedAt).toLocaleString()
+                : '—'}
+            </small>
+          </article>
+        `;
+      }).join('')
+    : '<p class="muted">No orders linked to your account yet.</p>';
+}
+
+async function refreshCustomerOrders(){const token=sessionStorage.getItem('dhanaCustomerToken');if(!token)return;const o=await fetch('/api/customer/orders',{headers:{Authorization:'Bearer '+token},cache:'no-store'});if(!o.ok){$('orders').textContent='Unable to refresh orders. Please login again.';return;}renderCustomerOrders(await o.json());}
+async function loadAccount(){const token=sessionStorage.getItem('dhanaCustomerToken');if(!token)return;const r=await fetch('/api/customer/me',{headers:{Authorization:'Bearer '+token}});if(!r.ok){sessionStorage.removeItem('dhanaCustomerToken');return;}const c=await r.json();$('authPanel').classList.remove('show');$('accountPanel').classList.add('show');$('customerName').textContent=c.name;$('customerEmail').textContent=c.email;await refreshCustomerOrders();}
+$('refreshOrdersBtn').onclick=refreshCustomerOrders;
+
+$('orders').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.cancel-order-btn');
+  if (!btn) return;
+
+  const orderId = btn.dataset.orderId;
+
+  if (!confirm('Are you sure you want to cancel this order?')) {
+    return;
+  }
+
+  const token = sessionStorage.getItem('dhanaCustomerToken');
+
+  btn.disabled = true;
+  btn.textContent = 'Cancelling...';
+
+  try {
+    const response = await fetch(
+      `/api/customer/orders/${encodeURIComponent(orderId)}/cancel`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Cancellation failed');
+    }
+
+    alert('Order cancelled successfully!');
+    await refreshCustomerOrders();
+
+  } catch (error) {
+    alert(error.message);
+    btn.disabled = false;
+    btn.textContent = 'Cancel Order';
+  }
+});
+
+$('logoutBtn').onclick=()=>{sessionStorage.removeItem('dhanaCustomerToken');location.reload();};loadAccount();
+const requestedMode=new URLSearchParams(window.location.search).get('mode');
+if(requestedMode==='register' && !sessionStorage.getItem('dhanaCustomerToken')) setMode('register');
+</script></body></html>

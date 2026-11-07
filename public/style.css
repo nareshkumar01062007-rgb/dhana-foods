@@ -1956,6 +1956,9 @@ img {
 
   .header-container {
     min-height: 70px;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 0;
   }
 
   .brand-logo {
@@ -1974,7 +1977,19 @@ img {
   }
 
   .main-nav {
-    display: none;
+    display: flex;
+    order: 3;
+    width: 100%;
+    gap: 18px;
+    overflow-x: auto;
+    padding: 8px 2px 12px;
+    white-space: nowrap;
+    scrollbar-width: thin;
+  }
+
+  .main-nav a {
+    flex: 0 0 auto;
+    font-size: 0.78rem;
   }
 
   .header-order-btn {

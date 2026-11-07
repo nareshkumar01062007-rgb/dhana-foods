@@ -105,18 +105,39 @@
     </div>
 
     <script>
-        function login() {
-            const username = document.getElementById("username").value;
+        async function login() {
+            const username = document.getElementById("username").value.trim();
             const password = document.getElementById("password").value;
             const errorMessage = document.getElementById("errorMessage");
+            const button = document.querySelector(".login-box button");
+            errorMessage.style.display = "none";
+            button.disabled = true;
+            button.textContent = "Signing in...";
 
-            if (username === "admin" && password === "dhana123") {
-                sessionStorage.setItem("adminLoggedIn", "true");
+            try {
+                const response = await fetch("/api/admin/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success || !data.token) {
+                    throw new Error(data.error || "Unable to sign in.");
+                }
+                sessionStorage.setItem("dhanaAdminToken", data.token);
                 window.location.href = "admin.html";
-            } else {
+            } catch (error) {
+                errorMessage.textContent = error.message;
                 errorMessage.style.display = "block";
+            } finally {
+                button.disabled = false;
+                button.textContent = "Login";
             }
         }
+
+        document.getElementById("password").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") login();
+        });
     </script>
 
 </body>
