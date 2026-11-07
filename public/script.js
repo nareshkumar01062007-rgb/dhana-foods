@@ -737,6 +737,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       async (event) => {
 
         event.preventDefault();
+        const customerToken = sessionStorage.getItem("dhanaCustomerToken");
+        sessionStorage.setItem("dhanaSavedCart", JSON.stringify(cart));
+
+if (!customerToken) {
+  sessionStorage.setItem("dhanaReturnToOrder", "true");
+  window.location.href = "customer-account.html?mode=login";
+  return;
+}
+
+
 
 
         syncCartFromInputs();
@@ -992,8 +1002,9 @@ try {
               {
                 method: "POST",
                 headers: {
-                  "Content-Type": "application/json"
-                },
+  "Content-Type": "application/json",
+  "Authorization": `Bearer ${sessionStorage.getItem("dhanaCustomerToken")}`
+},
                 body: JSON.stringify({
                   razorpay_order_id:
                     paymentResponse.razorpay_order_id,
@@ -1207,6 +1218,31 @@ try {
 
   }
 
+/* HAMBURGER MENU */
+const menuToggle = document.getElementById("menuToggle");
+const mainNav = document.getElementById("mainNav");
+
+if (menuToggle && mainNav) {
+  menuToggle.addEventListener("click", () => {
+    const isOpen = mainNav.classList.toggle("active");
+
+    menuToggle.setAttribute("aria-expanded", isOpen);
+    menuToggle.textContent = isOpen ? "✕" : "☰";
+    menuToggle.setAttribute(
+      "aria-label",
+      isOpen ? "Close navigation menu" : "Open navigation menu"
+    );
+  });
+
+  mainNav.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      mainNav.classList.remove("active");
+      menuToggle.textContent = "☰";
+      menuToggle.setAttribute("aria-expanded", "false");
+      menuToggle.setAttribute("aria-label", "Open navigation menu");
+    });
+  });
+}
 
   /* =======================================================
      SMOOTH NAVIGATION
@@ -1358,7 +1394,34 @@ try {
      INITIAL CART
   ======================================================= */
 
+  const savedCart = sessionStorage.getItem("dhanaSavedCart");
+
+if (savedCart) {
+  try {
+    const savedItems = JSON.parse(savedCart);
+
+    savedItems.forEach((item) => {
+      const input = [...quantityInputs].find((input) =>
+        normalizeProductName(input.dataset.product) === normalizeProductName(item.product) &&
+        input.dataset.size === item.size
+      );
+
+      if (input) {
+        input.value = item.quantity;
+      }
+    });
+
+    sessionStorage.removeItem("dhanaSavedCart");
+    syncCartFromInputs();
+
+  } catch (error) {
+    console.error("Unable to restore saved cart:", error);
+    sessionStorage.removeItem("dhanaSavedCart");
+    renderCart();
+  }
+} else {
   renderCart();
+}
 
   setMinimumDeliveryDate();
 

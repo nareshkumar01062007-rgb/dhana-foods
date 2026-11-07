@@ -656,7 +656,7 @@ app.delete("/api/admin/products/:id", requireAdmin, async (req, res) => {
    RAZORPAY - CREATE PAYMENT ORDER
 ========================================================= */
 
-app.post("/api/payment/create-order", async (req, res) => {
+app.post("/api/payment/create-order", verifyCustomerToken, async (req, res) => {
   try {
     const {
       customerName,
@@ -732,6 +732,7 @@ app.post("/api/payment/create-order", async (req, res) => {
 
     const order = {
       id: new ObjectId().toString(),
+      customerId: req.customer._id.toString(),
       customerName: String(customerName).trim(),
       phone: cleanPhone,
       address: String(address).trim(),
@@ -788,7 +789,7 @@ app.post("/api/payment/create-order", async (req, res) => {
    RAZORPAY - VERIFY PAYMENT & UPDATE DATABASE
 ========================================================= */
 
-app.post("/api/payment/verify", async (req, res) => {
+app.post("/api/payment/verify", verifyCustomerToken,async (req, res) => {
   try {
     const {
       razorpay_order_id,
@@ -830,7 +831,8 @@ app.post("/api/payment/verify", async (req, res) => {
 
     const order = await ordersCollection.findOne({
       id: orderId,
-      razorpayOrderId: razorpay_order_id
+      razorpayOrderId: razorpay_order_id,
+      customerId: req.customer._id.toString()
     });
 
     if (!order) {
@@ -925,7 +927,7 @@ app.post("/api/payment/verify", async (req, res) => {
    CREATE ORDER
 ========================================================= */
 
-app.post("/api/orders", async (req, res) => {
+app.post("/api/orders",verifyCustomerToken, async (req, res) => {
   try {
     const ordersCollection = await getOrders();
 
@@ -1012,6 +1014,7 @@ app.post("/api/orders", async (req, res) => {
 
     const order = {
       id: new ObjectId().toString(),
+      customerId: req.customer._id.toString(),
       customerName: String(customerName).trim(),
       phone: cleanPhone,
       address: String(address).trim(),
